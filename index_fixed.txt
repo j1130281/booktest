@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#111925">
+  <title>畢業紀念冊｜電子書</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111925;
+      --panel: rgba(24, 35, 49, .78);
+      --line: rgba(226, 205, 157, .22);
+      --gold: #d9c18a;
+      --gold-bright: #f1dfad;
+      --text: #f5f2eb;
+      --muted: #a9b2bf;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      position: fixed;
+    }
+    body {
+      color: var(--text);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse at 50% 34%, rgba(64, 83, 103, .30), transparent 48%),
+        radial-gradient(ellipse at 50% 100%, rgba(155, 125, 69, .10), transparent 42%),
+        linear-gradient(145deg, #0b111a 0%, #172230 48%, #101721 100%);
+      display: flex;
+      flex-direction: column;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+    }
+    .topbar {
+      width: min(1180px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 4px 0 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .brand-mark {
+      width: 26px; height: 26px; flex: 0 0 26px;
+      border: 1px solid rgba(217,193,138,.65);
+      border-radius: 6px;
+      display: grid; place-items: center;
+      color: var(--gold-bright);
+      font-family: Georgia, serif;
+      font-size: 13px;
+    }
+    .brand-title { font-size: 11px; letter-spacing: .16em; font-weight: 650; }
+    .top-note { font-size: 8px; color: var(--muted); letter-spacing: .12em; }
+    
+    .intro { text-align: center; padding: 2px 10px; position: relative; z-index: 1; flex-shrink: 0; }
+    .eyebrow {
+      color: var(--gold); font-size: 7px; letter-spacing: .38em;
+      text-transform: uppercase; margin-bottom: 1px;
+    }
+    h1 {
+      font-weight: 500; font-size: clamp(16px, 2vw, 22px);
+      letter-spacing: .18em; margin: 0; text-indent: .18em;
+    }
+    .intro p { color: var(--muted); font-size: 9px; letter-spacing: .08em; margin: 1px 0 0; }
+    .ornament { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 2px auto 0; }
+    .ornament::before, .ornament::after { content: ""; width: 20px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); }
+    .ornament::after { transform: scaleX(-1); }
+    .ornament span { width: 3px; height: 3px; transform: rotate(45deg); background: var(--gold); }
+    
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 2px 6px 4px;
+      position: relative;
+      z-index: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .reader-shell {
+      width: 100%;
+      max-width: 1280px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid rgba(255,255,255,.055);
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,.008));
+      box-shadow: 0 26px 90px rgba(0,0,0,.18), inset 0 1px rgba(255,255,255,.035);
+      padding: 4px;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .reader-topline {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: .08em;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+    .live-status { display: flex; align-items: center; gap: 5px; }
+    .status-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px rgba(217,193,138,.5); }
+    
+    #loading-status { text-align: center; color: #d7c79f; font-size: 11px; padding: 20px 15px; }
+    .loader {
+      width: 20px; height: 20px; margin: 0 auto 8px; border-radius: 50%;
+      border: 2px solid rgba(217,193,138,.18); border-top-color: var(--gold);
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .book-stage {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 0;
+      margin: 0 auto;
+      overflow: hidden;
+      min-height: 0;
+    }
+    #flipbook {
+      display: none;
+      position: relative;
+      z-index: 1;
+      margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .page { background: #fff; overflow: hidden; }
+    .page canvas { display: block; width: 100%; height: 100%; }
+    
+    .controls {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding-top: 3px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .control-btn {
+      min-width: 30px; height: 28px; padding: 0 6px;
+      border: 1px solid rgba(217,193,138,.25); border-radius: 6px;
+      color: var(--text); background: rgba(255,255,255,.045);
+      font: inherit; font-size: 10px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      transition: background .2s, border-color .2s;
+    }
+    .control-btn:hover:not(:disabled) { background: rgba(217,193,138,.12); border-color: rgba(217,193,138,.6); }
+    .control-btn:disabled { opacity: .32; cursor: not-allowed; }
+    .control-btn.primary { color: #161b22; background: linear-gradient(135deg, #ead8a5, #c6a967); border-color: transparent; font-weight: 700; }
+    .page-readout { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .page-input {
+      width: 34px; height: 26px; text-align: center; color: var(--text);
+      background: rgba(0,0,0,.22); border: 1px solid var(--line); border-radius: 5px;
+      font: inherit; font-size: 10px;
+    }
+    .progress-wrap { width: 100%; height: 2px; background: rgba(255,255,255,.09); border-radius: 9px; margin-top: 2px; overflow: hidden; flex-shrink: 0; }
+    #progress { width: 0%; height: 100%; background: linear-gradient(90deg, #b89b5f, #f0dfb1); transition: width .25s ease; }
+    .bottomline { display: flex; justify-content: space-between; gap: 12px; width: 100%; margin-top: 2px; color: #7f8b9b; font-size: 8px; letter-spacing: .06em; flex-shrink: 0; }
+    footer { text-align: center; color: #718092; font-size: 7px; letter-spacing: .12em; padding: 2px 10px 2px; flex-shrink: 0; }
+    
+    body.reading-mode .topbar, body.reading-mode .intro, body.reading-mode footer { display: none !important; }
+    body.reading-mode main { padding: 2px; }
+    body.reading-mode .reader-shell { border-radius: 0; border: none; padding: 2px; }
+    
+    .error { color: #f1b5a9 !important; line-height: 1.8; }
+    
+    @media (max-width: 768px) {
+      .top-note { display: none; }
+      .control-btn .btn-text { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">✦</div>
+      <div>
+        <div class="brand-title">GRADUATION ARCHIVE</div>
+      </div>
+    </div>
+    <div class="top-note">MEMORIES · FRIENDSHIP · THE FUTURE</div>
+  </header>
+
+  <section class="intro">
+    <div class="eyebrow">OUR CHAPTER · 2026</div>
+    <h1>畢業紀念冊</h1>
+    <p>把一起走過的日子，珍藏成永遠。</p>
+    <div class="ornament" aria-hidden="true"><span></span></div>
+  </section>
+
+  <main>
+    <section class="reader-shell" aria-label="電子紀念冊閱讀器">
+      <div class="reader-topline">
+        <div class="live-status"><span class="status-dot"></span><span id="reader-label">紀念冊閱讀模式</span></div>
+        <span id="total-label">準備載入中</span>
+      </div>
+      <div class="book-stage">
+        <div id="loading-status" role="status" aria-live="polite">
+          <div class="loader"></div>
+          正在準備我們的回憶……
+        </div>
+        <div id="flipbook" aria-label="可翻頁的 PDF 紀念冊"></div>
+      </div>
+      <div class="controls" aria-label="翻頁控制">
+        <button class="control-btn" id="first-btn" type="button" title="回到封面" aria-label="回到封面" disabled>⇤ <span class="btn-text">封面</span></button>
+        <button class="control-btn" id="prev-btn" type="button" title="上一頁" aria-label="上一頁" disabled>← <span class="btn-text">上一頁</span></button>
+        <div class="page-readout">
+          <input class="page-input" id="page-input" type="number" min="1" value="1" aria-label="跳至頁碼" disabled>
+          <span>/</span><span id="page-total">—</span>
+        </div>
+        <button class="control-btn primary" id="next-btn" type="button" title="下一頁" aria-label="下一頁" disabled><span class="btn-text">下一頁</span> →</button>
+        <button class="control-btn" id="last-btn" type="button" title="前往最後一頁" aria-label="前往最後一頁" disabled><span class="btn-text">末頁</span> ⇥</button>
+        <button class="control-btn" id="fullscreen-btn" type="button" title="全螢幕閱讀" aria-label="全螢幕閱讀">⛶ <span class="btn-text">全螢幕</span></button>
+      </div>
+      <div class="progress-wrap" aria-label="閱讀進度"><div id="progress"></div></div>
+      <div class="bottomline">
+        <span>左右滑動或點擊按鈕翻頁。</span>
+        <span>建議全螢幕體驗更佳</span>
+      </div>
+    </section>
+  </main>
+  <footer>MADE OF MEMORIES · CLASS OF 2026</footer>
+
+  <script src="./build/pdf.min.js"></script>
+  <script src="./page-flip.browser.js"></script>
+  <script>
+    (() => {
+      const PDF_URL = './index.pdf';
+      const loadingStatus = document.getElementById('loading-status');
+      const flipbook = document.getElementById('flipbook');
+      const totalLabel = document.getElementById('total-label');
+      const pageTotal = document.getElementById('page-total');
+      const pageInput = document.getElementById('page-input');
+      const progress = document.getElementById('progress');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+      const firstBtn = document.getElementById('first-btn');
+      const lastBtn = document.getElementById('last-btn');
+      const fullscreenBtn = document.getElementById('fullscreen-btn');
+      
+      let pageFlip = null;
+      let totalPages = 0;
+      let currentPage = 0;
+      let pdfDoc = null;
+      let pdfBaseViewport = null;
+
+      if (!window.pdfjsLib || !window.St || !window.St.PageFlip) {
+        showError('找不到翻頁程式。請確認 build 資料夾、pdf.min.js 與 page-flip.browser.js 都放在正確位置。');
+        return;
+      }
+      pdfjsLib.GlobalWorkerOptions.workerSrc = './build/pdf.worker.min.js';
+
+      function showError(message) {
+        loadingStatus.innerHTML = '';
+        loadingStatus.classList.add('error');
+        loadingStatus.textContent = message;
+        totalLabel.textContent = '載入失敗';
+      }
+
+      function updateControls(index) {
+        currentPage = Math.max(0, Math.min(index, totalPages - 1));
+
+        // 封面／封底在非全螢幕時微調向下，抵消翻頁元件的視覺上移。
+        const coverPage = currentPage === 0 || currentPage === totalPages - 1;
+        flipbook.style.transform = coverPage && !document.fullscreenElement
+          ? 'translateY(4px)'
+          : '';
+
+        pageInput.value = String(currentPage + 1);
+        pageInput.max = String(totalPages);
+        pageTotal.textContent = String(totalPages);
+        totalLabel.textContent = `共 ${totalPages} 頁`;
+        progress.style.width = `${totalPages > 1 ? (currentPage / (totalPages - 1)) * 100 : 100}%`;
+        firstBtn.disabled = prevBtn.disabled = currentPage <= 0;
+        nextBtn.disabled = lastBtn.disabled = currentPage >= totalPages - 1;
+      }
+
+      // 修正：使用 turnToPage 配合正確的 0-based 索引跳轉
+      function goToPage(value) {
+        if (!pageFlip || !totalPages) return;
+        const n = Number(value);
+        if (!Number.isFinite(n)) { pageInput.value = String(currentPage + 1); return; }
+        const target = Math.max(1, Math.min(totalPages, Math.round(n))) - 1;
+        pageFlip.turnToPage(target);
+        updateControls(target);
+      }
+
+      function calculateSpreadDimensions(baseWidth, baseHeight) {
+        const stage = document.querySelector('.book-stage');
+        const isMobile = window.innerWidth < 768 || window.matchMedia('(orientation: portrait)').matches;
+        
+        const availableWidth = Math.max(200, stage.clientWidth);
+        const availableHeight = Math.max(200, stage.clientHeight);
+        
+        const baseAspect = baseWidth / baseHeight;
+        const spreadAspect = isMobile ? baseAspect : (baseAspect * 2);
+        
+        let targetWidth = availableWidth;
+        let targetHeight = targetWidth / spreadAspect;
+        
+        if (targetHeight > availableHeight) {
+          targetHeight = availableHeight;
+          targetWidth = targetHeight * spreadAspect;
+        }
+
+        let singlePageWidth = isMobile ? targetWidth : (targetWidth / 2);
+        let singlePageHeight = targetHeight;
+
+        return {
+          pageWidth: Math.floor(singlePageWidth),
+          pageHeight: Math.floor(singlePageHeight),
+          spreadWidth: Math.floor(isMobile ? singlePageWidth : singlePageWidth * 2),
+          spreadHeight: Math.floor(singlePageHeight),
+          isMobile
+        };
+      }
+
+      prevBtn.addEventListener('click', () => pageFlip && pageFlip.flipPrev());
+      nextBtn.addEventListener('click', () => pageFlip && pageFlip.flipNext());
+      
+      // 修正：首頁直接跳至 1（索引 0），末頁直接跳至總頁數（索引 totalPages - 1）
+      firstBtn.addEventListener('click', () => goToPage(1));
+      lastBtn.addEventListener('click', () => goToPage(totalPages));
+      
+      pageInput.addEventListener('change', () => goToPage(pageInput.value));
+      pageInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') { goToPage(pageInput.value); pageInput.blur(); }
+      });
+
+      fullscreenBtn.addEventListener('click', async () => {
+        try {
+          if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+          } else {
+            await document.exitFullscreen();
+          }
+        } catch (error) {
+          fullscreenBtn.title = '此瀏覽器不允許全螢幕模式';
+        }
+      });
+
+      document.addEventListener('fullscreenchange', () => {
+        const active = Boolean(document.fullscreenElement);
+        document.body.classList.toggle('reading-mode', active);
+        fullscreenBtn.innerHTML = active ? '⛶ <span class="btn-text">退出全螢幕</span>' : '⛶ <span class="btn-text">全螢幕</span>';
+        setTimeout(reInitFlipbook, 100);
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.target === pageInput) return;
+        if (event.key === 'ArrowLeft' && pageFlip) pageFlip.flipPrev();
+        if (event.key === 'ArrowRight' && pageFlip) pageFlip.flipNext();
+      });
+
+      let resizeTimer = null;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (pdfBaseViewport && pageFlip) {
+            reInitFlipbook();
+          }
+        }, 150);
+      });
+
+      function reInitFlipbook() {
+        if (!pdfBaseViewport) return;
+        const dims = calculateSpreadDimensions(pdfBaseViewport.width, pdfBaseViewport.height);
+        
+        flipbook.style.width = `${dims.spreadWidth}px`;
+        flipbook.style.height = `${dims.spreadHeight}px`;
+
+        pageFlip.update({
+          width: dims.pageWidth,
+          height: dims.pageHeight,
+          usePortrait: dims.isMobile
+        });
+      }
+
+      async function loadBook() {
+        try {
+          loadingStatus.innerHTML = '<div class="loader"></div>正在讀取紀念冊 PDF……';
+          const response = await fetch(PDF_URL);
+          if (!response.ok) throw new Error(`PDF 讀取失敗（HTTP ${response.status}）`);
+          const buffer = await response.arrayBuffer();
+          pdfDoc = await pdfjsLib.getDocument({ data: buffer }).promise;
+          totalPages = pdfDoc.numPages;
+          totalLabel.textContent = `共 ${totalPages} 頁`;
+          pageTotal.textContent = String(totalPages);
+
+          const firstPage = await pdfDoc.getPage(1);
+          pdfBaseViewport = firstPage.getViewport({ scale: 1 });
+
+          const renderScale = Math.min(2.0, Math.max(1.25, (window.devicePixelRatio || 1) * 1.25));
+
+          for (let n = 1; n <= totalPages; n++) {
+            loadingStatus.innerHTML = `<div class="loader"></div>正在整理回憶…… ${n} / ${totalPages}`;
+            const pdfPage = await pdfDoc.getPage(n);
+            const viewport = pdfPage.getViewport({ scale: renderScale });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d', { alpha: false });
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
+            await pdfPage.render({ canvasContext: context, viewport }).promise;
+            
+            const pageElement = document.createElement('div');
+            pageElement.className = 'page';
+            pageElement.appendChild(canvas);
+            flipbook.appendChild(pageElement);
+          }
+
+          loadingStatus.style.display = 'none';
+          flipbook.style.display = 'block';
+
+          const dims = calculateSpreadDimensions(pdfBaseViewport.width, pdfBaseViewport.height);
+          flipbook.style.width = `${dims.spreadWidth}px`;
+          flipbook.style.height = `${dims.spreadHeight}px`;
+
+          pageFlip = new St.PageFlip(flipbook, {
+            width: dims.pageWidth,
+            height: dims.pageHeight,
+            size: 'stretch',
+            maxShadowOpacity: 0.25,
+            showCover: true,
+            mobileScrollSupport: false,
+            clickEventForward: true,
+            usePortrait: dims.isMobile,
+            drawShadow: true,
+            flippingTime: 400,
+            startPage: 0
+          });
+
+          pageFlip.loadFromHTML(flipbook.querySelectorAll('.page'));
+          
+          // 修正：監聽翻頁事件，確保當透過滑動或點擊翻頁時，輸入框與狀態能正確同步
+          pageFlip.on('flip', event => updateControls(Number(event.data) || 0));
+
+          pageInput.disabled = false;
+          updateControls(0);
+          document.getElementById('reader-label').textContent = '已準備好，開始閱讀';
+
+        } catch (error) {
+          console.error(error);
+          showError('載入失敗。請確認 index.pdf 與 index.html 位於同一資料夾，並透過伺服器開啟。');
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', loadBook, { once: true });
+    })();
+  </script>
+</body>
+</html>
